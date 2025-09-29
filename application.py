@@ -9,7 +9,7 @@ import time
 # Chargement du modèle
 # =========================
 pipe_best = joblib.load("best_model.pkl")
-df = pd.read_csv("data/botswana_bank_customer_churn_light.csv")
+df = pd.read_csv("botswana_bank_customer_churn_light.csv")
 
 
 
@@ -149,6 +149,7 @@ if st.button("🔮 Prédire le Churn"):
     # Graphique comparatif (barres)
     st.bar_chart(comparatif.set_index("Variable"))
     
+
 
 
 
