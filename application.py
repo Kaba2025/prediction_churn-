@@ -1,4 +1,8 @@
-# app_churn.py
+import os
+# CONFIGURATION CRITIQUE - TOUJOURS AU DÉBUT
+os.environ['STREAMLIT_GATHER_USAGE_STATS'] = 'false'
+os.environ['MPLCONFIGDIR'] = '/tmp/matplotlib'
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -8,11 +12,16 @@ import time
 # =========================
 # Chargement du modèle
 # =========================
-pipe_best = joblib.load("best_model.pkl")
-df = pd.read_csv("botswana_bank_customer_churn_light.csv")
+@st.cache_resource
+def load_model():
+    return joblib.load("best_model.pkl")
 
+@st.cache_data
+def load_data():
+    return pd.read_csv("botswana_bank_customer_churn_light.csv")
 
-
+pipe_best = load_model()
+df = load_data()
 
 # =========================
 # Fonctions utilitaires
@@ -39,7 +48,7 @@ def recommandations(pred, risque):
         recos.append("🤝 Améliorer le service client pour restaurer la confiance.")
     else:
         recos.append("✅ Continuer à fidéliser ce client avec des avantages.")
-        recos.append("⭐ Demander un feedback pour améliorer l’expérience.")
+        recos.append("⭐ Demander un feedback pour améliorer l'expérience.")
     return recos
 
 # =========================
@@ -54,7 +63,7 @@ st.sidebar.header("⚙️ Paramètres client")
 st.sidebar.info("🖊️ Saisissez les informations du client à analyser.")
 
 # =========================
-# Champs d’entrée
+# Champs d'entrée
 # =========================
 age = st.sidebar.slider("Âge", 18, 90, 35)
 dependents = st.sidebar.slider("Nombre de personnes à charge", 0, 10, 2)
@@ -68,7 +77,7 @@ complaints = st.sidebar.slider("Nombre de réclamations", 0, 20, 1)
 
 gender = st.sidebar.selectbox("Genre", ["Male", "Female"])
 marital = st.sidebar.selectbox("État civil", ["Single", "Married", "Divorced"])
-education = st.sidebar.selectbox("Niveau d’éducation", ["High School", "Bachelor", "Master", "PhD"])
+education = st.sidebar.selectbox("Niveau d'éducation", ["High School", "Bachelor", "Master", "PhD"])
 segment = st.sidebar.selectbox("Segment client", ["Standard", "Premium", "VIP"])
 channel = st.sidebar.selectbox("Canal préféré", ["Email", "SMS", "Phone", "In-person"])
 
@@ -97,7 +106,7 @@ st.dataframe(client_df, use_container_width=True)
 
 if st.button("🔮 Prédire le Churn"):
     with st.spinner("⏳ Analyse en cours..."):
-        time.sleep(1.5)  # petite animation d’attente
+        time.sleep(1.5)
 
     proba = pipe_best.predict_proba(client_df)[0,1]
     pred = "Churn" if proba >= 0.5 else "Non Churn"
@@ -115,7 +124,7 @@ if st.button("🔮 Prédire le Churn"):
     st.progress(int(proba*100))
 
     # Interprétation
-    with st.expander("🔍 Interprétation par règles d’association"):
+    with st.expander("🔍 Interprétation par règles d'association"):
         st.write(f"Risque identifié : **{risque}**")
         if risque == "Risque élevé":
             st.warning("⚠️ Le client cumule un solde faible et beaucoup de réclamations.")
@@ -133,7 +142,7 @@ if st.button("🔮 Prédire le Churn"):
     st.subheader("📊 Comparatif client vs population")
 
     # Variables quantitatives à comparer
-    variables = [ "Income", "Credit Score", "Balance", "NumOfProducts", "NumComplaints"]
+    variables = ["Income", "Credit Score", "Balance", "NumOfProducts", "NumComplaints"]
 
     moyenne_pop = df[variables].mean().round(2)
     client_vals = client_df[variables].iloc[0]
@@ -145,11 +154,4 @@ if st.button("🔮 Prédire le Churn"):
     })
 
     st.dataframe(comparatif, use_container_width=True)
-
-    # Graphique comparatif (barres)
     st.bar_chart(comparatif.set_index("Variable"))
-    
-
-
-
-
